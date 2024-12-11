@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Forca</title>
+    <!-- Link para o arquivo CSS do Bootstrap baixado -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        #hangman-drawing {
+            margin: 0 auto;
+            height: 300px;
+            width: 150px;
+            position: relative;
+        }
+
+        #hangman-drawing .body-part {
+            position: absolute;
+            transition: all 0.3s ease-in-out;
+        }
+
+        #head {
+            top: 10px;
+            left: 50px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            background-color: #fff;
+            display: none;
+        }
+
+        #body {
+            top: 50px;
+            left: 70px;
+            width: 3px;
+            height: 60px;
+            background-color: #333;
+            display: none;
+        }
+
+        #left-arm, #right-arm {
+    top: 50px;
+    width: 38px; /* Largura do braço */
+    height: 3px; /* Espessura do braço */
+    background-color: #333;
+    display: none;
+}
+
+#left-arm {
+    left: 35px;
+    transform: rotate(30deg); /* Ângulo menor para o braço esquerdo */
+}
+
+#right-arm {
+    left: 70px;
+    transform: rotate(-30deg); /* Ângulo menor para o braço direito */
+}
+
+#left-leg, #right-leg {
+    top: 110px; /* Altura das pernas em relação ao corpo */
+    width: 45px; /* Largura da perna */
+    height: 3px; /* Espessura da perna */
+    background-color: #333;
+    display: none;
+}
+
+#right-leg {
+    right: 35px; /* Posiciona a perna esquerda mais próxima do corpo */
+    transform: rotate(30deg); /* Ângulo mais sutil */
+}
+
+#left-leg {
+    left: 30px; /* Posiciona a perna direita mais próxima do corpo */
+    transform: rotate(-30deg); /* Ângulo mais sutil */
+}
+
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #word-display {
+            font-size: 2rem;
+            letter-spacing: 1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        #letter-input {
+            width: 150px;
+            font-size: 1rem;
+            text-align: center;
+            border-radius: 12px;
+            padding: 10px;
+            margin-right: 10px;
+        }
+
+        #guess-button {
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .message {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        #attempts {
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            font-size: 1rem;
+            border-radius: 5px;
+            padding: 10px 20px;
+        }
+
+        #restart-button {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- Lado esquerdo: Bonequinho da forca -->
+    <div id="hangman-drawing">
+        <div id="head" class="body-part"></div>
+        <div id="body" class="body-part"></div>
+        <div id="left-arm" class="body-part"></div>
+        <div id="right-arm" class="body-part"></div>
+        <div id="left-leg" class="body-part"></div>
+        <div id="right-leg" class="body-part"></div>
+    </div>
+
+    <!-- Lado direito: Palavras, entrada de letras e mensagens -->
+    <div class="game-content">
+        <h4 id="word-display">_ _ _ _ _</h4>
+        <h5 class="message" id="message">Adivinhe o ponto turístico!</h5>
+        <div class="input-container">
+            <input type="text" id="letter-input" class="form-control" maxlength="1" placeholder="Digite uma letra">
+            <button id="guess-button" class="btn btn-primary">Adivinhar</button>
+        </div>
+        <p id="attempts">Tentativas restantes: <span id="attempts-count">6</span></p>
+        <button id="restart-button" class="btn btn-success">Recomeçar</button>
+    </div>
+</div>
+
+<script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Lista de palavras com pontos turísticos brasileiros
+  const words = [
+      "cristo redentor", "pao de acucar", "cataratas do iguacu", 
+      "pelourinho", "chapada dos veadeiros", 
+      "praia do futuro", "palacio do planalto", "biblioteca nacional",
+  ];
+  let word = words[Math.floor(Math.random() * words.length)];
+  word = word.toLowerCase();
+  let attempts = 6;
+  let guessedLetters = [];
+  let displayedWord = Array(word.length).fill('_');
+
+  const wordDisplay = document.getElementById("word-display");
+  wordDisplay.textContent = displayedWord.join(' ');
+
+  const attemptsDisplay = document.getElementById("attempts-count");
+  attemptsDisplay.textContent = attempts;
+
+  const letterInput = document.getElementById("letter-input");
+  const guessButton = document.getElementById("guess-button");
+  const messageDisplay = document.getElementById("message");
+  const restartButton = document.getElementById("restart-button");
+
+  function isLetterGuessed(letter) {
+      return guessedLetters.includes(letter);
+  }
+
+  function showHangmanPart(part) {
+      const partElement = document.getElementById(part);
+      if (partElement) {
+          partElement.style.display = 'block';
+      }
+  }
+
+  function makeGuess() {
+      const letter = letterInput.value.toLowerCase();
+
+      if (letter && !isLetterGuessed(letter)) {
+          guessedLetters.push(letter);
+          if (word.includes(letter)) {
+              for (let i = 0; i < word.length; i++) {
+                  if (word[i] === letter) {
+                      displayedWord[i] = letter;
+                  }
+              }
+              wordDisplay.textContent = displayedWord.join(' ');
+
+              if (!displayedWord.includes('_')) {
+                  messageDisplay.textContent = "Você venceu!";
+                  guessButton.disabled = true;
+                  restartButton.style.display = "inline-block";
+              }
+          } else {
+              attempts--;
+              attemptsDisplay.textContent = attempts;
+
+              if (attempts === 5) showHangmanPart('head');
+              if (attempts === 4) showHangmanPart('body');
+              if (attempts === 3) showHangmanPart('left-arm');
+              if (attempts === 2) showHangmanPart('right-arm');
+              if (attempts === 1) showHangmanPart('left-leg');
+              if (attempts === 0) {
+                  showHangmanPart('right-leg');
+                  messageDisplay.textContent = `Você perdeu! A palavra era "${word}".`;
+                  guessButton.disabled = true;
+                  restartButton.style.display = "inline-block";
+              }
+          }
+      }
+
+      letterInput.value = "";
+      letterInput.focus();
+  }
+
+  function restartGame() {
+      word = words[Math.floor(Math.random() * words.length)];
+      word = word.toLowerCase();
+      attempts = 6;
+      guessedLetters = [];
+      displayedWord = Array(word.length).fill('_');
+      wordDisplay.textContent = displayedWord.join(' ');
+      attemptsDisplay.textContent = attempts;
+      messageDisplay.textContent = "Adivinhe o ponto turístico!";
+      const bodyParts = document.querySelectorAll('.body-part');
+      bodyParts.forEach(part => part.style.display = 'none');
+      guessButton.disabled = false;
+      restartButton.style.display = "none";
+  }
+
+  guessButton.addEventListener("click", makeGuess);
+  restartButton.addEventListener("click", restartGame);
+</script>
+
+</body>
+</html>
